@@ -39,12 +39,29 @@ var (
 	disableStackPull bool
 )
 
+var (
+	chainID                 string
+	chainAddr               string
+	chainFunctionClientAddr string
+	chainFunctionOracleAddr string
+	chainLocalKeyPath       string
+	chainKeyPassword        string
+)
+
 func init() {
 	// Setup flags that are used by multiple commands (variables defined in faas.go)
 	buildCmd.Flags().StringVar(&image, "image", "", "Docker image name to build")
 	buildCmd.Flags().StringVar(&handler, "handler", "", "Directory with handler for function, e.g. handler.js")
 	buildCmd.Flags().StringVar(&functionName, "name", "", "Name of the deployed function")
 	buildCmd.Flags().StringVar(&language, "lang", "", "Programming language template")
+
+	// New chain flags
+	buildCmd.Flags().StringVar(&chainID, "chain-id", "", "Chain ID")
+	buildCmd.Flags().StringVar(&chainAddr, "chain-addr", "", "Chain address")
+	buildCmd.Flags().StringVar(&chainFunctionClientAddr, "chain-function-client-addr", "", "Chain function client address")
+	buildCmd.Flags().StringVar(&chainFunctionOracleAddr, "chain-function-oracle-addr", "", "Chain function oracle address")
+	buildCmd.Flags().StringVar(&chainLocalKeyPath, "chain-local-key-path", "", "Chain local key file path")
+	buildCmd.Flags().StringVar(&chainKeyPassword, "chain-key-password", "", "Chain key password")
 
 	// Setup flags that are used only by this command (variables defined above)
 	buildCmd.Flags().BoolVar(&nocache, "no-cache", false, "Do not use Docker's build cache")
@@ -108,6 +125,38 @@ func preRunBuild(cmd *cobra.Command, args []string) error {
 
 	if err == nil {
 		buildArgMap = mapped
+	}
+
+	// new buildArgMap for chain
+	if chainID != "" {
+		buildArgMap["chain_id"] = chainID
+	} else {
+		return fmt.Errorf("missing required parameters: --chain-id")
+	}
+	if chainAddr != "" {
+		buildArgMap["chain_addr"] = chainAddr
+	} else {
+		return fmt.Errorf("missing required parameters: --chain-addr")
+	}
+	if chainFunctionClientAddr != "" {
+		buildArgMap["chain_function_client_addr"] = chainFunctionClientAddr
+	} else {
+		return fmt.Errorf("missing required parameters: --chain-function-client-addr")
+	}
+	if chainFunctionOracleAddr != "" {
+		buildArgMap["chain_function_oracle_addr"] = chainFunctionOracleAddr
+	} else {
+		return fmt.Errorf("missing required parameters: --chain-function-oracle-addr")
+	}
+	if chainLocalKeyPath != "" {
+		buildArgMap["chain_local_key_path"] = chainLocalKeyPath
+	} else {
+		return fmt.Errorf("missing required parameters: --chain-local-key-path")
+	}
+	if chainKeyPassword != "" {
+		buildArgMap["chain_key_password"] = chainKeyPassword
+	} else {
+		return fmt.Errorf("missing required parameters: --chain-key-password")
 	}
 
 	buildLabelMap, err = util.ParseMap(buildLabels, "build-label")

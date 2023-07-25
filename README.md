@@ -13,7 +13,16 @@ The CLI can be used to build and deploy functions to [OpenFaaS](https://github.c
 
 New user? See how it works: [Morning coffee with the faas-cli](https://blog.alexellis.io/quickstart-openfaas-cli/)
 Already an OpenFaaS user? Try [5 tips and tricks for the OpenFaaS CLI](https://www.openfaas.com/blog/five-cli-tips/)
-
+### Update 2023-07-25
+Add Packaging Function Integration Chain Environment Parameter
+```azure
+--chain-id
+--chain-addr
+--chain-function-client-addr
+--chain-function-oracle-addr
+--chain-local-key-path
+--chain-key-password
+```
 ### Get started: Install the CLI
 
 You can install the CLI with a `curl` utility script, `brew` or by downloading the binary from the releases page. Once installed you'll get the `faas-cli` command and `faas` alias.

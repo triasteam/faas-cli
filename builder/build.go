@@ -4,6 +4,7 @@
 package builder
 
 import (
+	"bufio"
 	"crypto/md5"
 	"encoding/hex"
 	"encoding/json"
@@ -17,6 +18,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"text/template"
 
 	v1execute "github.com/alexellis/go-execute/pkg/v1"
 	"github.com/openfaas/faas-cli/schema"
@@ -60,6 +62,49 @@ func BuildImage(image string, handler string, functionName string, language stri
 		if shrinkwrap {
 			fmt.Printf("%s shrink-wrapped to %s\n", functionName, tempPath)
 			return nil
+		}
+
+		// new dockerfile chain env
+		keyMap := map[string]string{
+			"chain_local_key_path":       "ChainLocalKeyPath",
+			"chain_id":                   "ChainId",
+			"chain_addr":                 "ChainAddr",
+			"chain_function_client_addr": "ChainFunctionClientAddr",
+			"chain_function_oracle_addr": "ChainFunctionOracleAddr",
+			"chain_key_password":         "ChainKeyPassword",
+		}
+
+		dockerParams := make(map[string]string)
+		for key, value := range keyMap {
+			if buildArgMap[key] != "" {
+				dockerParams[value] = buildArgMap[key]
+			} else {
+				dockerParams[value] = ""
+			}
+		}
+		dockerFilePath := fmt.Sprintf("%s/Dockerfile", tempPath)
+		file, err := os.Open(dockerFilePath)
+		if err != nil {
+			return fmt.Errorf("error reading language template Dockerfile: %s", err.Error())
+		}
+
+		var dockerfileStr strings.Builder
+		scanner := bufio.NewScanner(file)
+		for scanner.Scan() {
+			dockerfileStr.WriteString(scanner.Text())
+			dockerfileStr.WriteString("\n")
+		}
+		t := template.Must(template.New("Dockerfile").Parse(dockerfileStr.String()))
+
+		file, err = os.Create(dockerFilePath)
+		if err != nil {
+			return fmt.Errorf("failed to generate a new dockerfile: %s", err.Error())
+		}
+		defer file.Close()
+
+		err = t.Execute(file, dockerParams)
+		if err != nil {
+			return fmt.Errorf("failed to write chain information: %s", err.Error())
 		}
 
 		branch, version, err := GetImageTagValues(tagFormat, handler)
